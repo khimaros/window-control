@@ -1,4 +1,4 @@
-# Window Calls
+# Gnome Call Window
 
 This extension allows you to list current windows with some of their properties from command line, super usefull for Wayland to get current focused window.
 
