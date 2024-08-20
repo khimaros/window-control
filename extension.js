@@ -16,11 +16,12 @@
  * SPDX-License-Identifier: GPL-2.0-or-later
  */
 
-import Gio from 'gi://Gio';
+import Gio from 'gi://Gio'
+import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js'
 
 const MR_DBUS_IFACE = `
 <node>
-   <interface name="org.gnome.Shell.Extensions.Windows">
+   <interface name="org.gnome.Shell.Extensions.CallWindow">
       <method name="List">
          <arg type="s" direction="out" name="win" />
       </method>
@@ -44,7 +45,7 @@ const MR_DBUS_IFACE = `
          <arg type="u" direction="in" name="winid" />
          <arg type="u" direction="in" name="workspaceNum" />
       </method>
-      <method name="MoveResize">
+      <method name="Place">
          <arg type="u" direction="in" name="winid" />
          <arg type="i" direction="in" name="x" />
          <arg type="i" direction="in" name="y" />
@@ -80,228 +81,255 @@ const MR_DBUS_IFACE = `
          <arg type="u" direction="in" name="winid" />
       </method>
    </interface>
-</node>`;
+</node>`
 
-
-export default class Extension {
-  enable() {
-    this._dbus = Gio.DBusExportedObject.wrapJSObject(MR_DBUS_IFACE, this);
-    this._dbus.export(Gio.DBus.session, '/org/gnome/Shell/Extensions/Windows');
-  }
-
-  disable() {
-    this._dbus.flush();
-    this._dbus.unexport();
-    delete this._dbus;
-  }
-
-  _get_window_by_wid(winid) {
-    let win = global.get_window_actors().find(w => w.meta_window.get_id() == winid);
-    return win;
-  }
-
-  Details(winid) {
-    const w = this._get_window_by_wid(winid);
-
-    if (!w) {
-      throw new Error('Not found');
+export default class CallWindow extends Extension {
+    enable() {
+        this._dbus = Gio.DBusExportedObject.wrapJSObject(MR_DBUS_IFACE, this)
+        this._dbus.export(Gio.DBus.session, '/org/gnome/Shell/Extensions/CallWindow')
     }
 
-    const workspaceManager = global.workspace_manager;
-    const currentmonitor = global.display.get_current_monitor();
-    // const monitor = global.display.get_monitor_geometry(currentmonitor);
-
-    const props = {
-      get: ['wm_class', 'wm_class_instance', 'pid', 'id', 'maximized', 'display', 'frame_type', 'window_type', 'layer', 'monitor', 'role', 'title'],
-      can: ['close', 'maximize', 'minimize'],
-      has: ['focus'],
-      custom: new Map([
-        ['moveable', 'allows_move'],
-        ['resizeable', 'allows_resize'],
-        ['area', 'get_work_area_current_monitor'],
-        ['area_all', 'get_work_area_all_monitors'],
-        ['canclose', 'can_close'],
-        ['canmaximize', 'can_maximize'],
-        ['canminimize', 'can_minimize'],
-        ['canshade', 'can_shade'],
-      ]),
-      frame: ['x', 'y', 'width', 'height']
-    };
-
-    const win = {
-      in_current_workspace: w.meta_window.located_on_workspace?.(workspaceManager.get_active_workspace?.()),
-      area_cust: w.meta_window.get_work_area_for_monitor?.(currentmonitor)
-    };
-
-    props.get.forEach(name => win[name] = w.meta_window[`get_${name}`]?.());
-    props.can.forEach(name => win[`can${name}`] = w.meta_window[`can_${name}`]?.());
-    props.has.forEach(name => win[name] = w.meta_window[`has_${name}`]?.());
-    props.custom.forEach((fname, name) => { win[name] = w.meta_window[fname]?.() });
-    let frame = w.meta_window.get_frame_rect();
-    props.frame.forEach(name => win[name] = frame[name]);
-    
-    return JSON.stringify(win);
-  }
-
-  List() {
-    const win = global.get_window_actors();
-    const workspaceManager = global.workspace_manager;
-
-    const props = {
-      get: ['wm_class', 'wm_class_instance', 'pid', 'id', 'frame_type', 'window_type', 'width', 'height', 'x', 'y'],
-      has: ['focus'],
-      // custom: new Map([])
-    };
-
-    const winJsonArr = win.map(w => {
-      const win = {
-        in_current_workspace: w.meta_window.located_on_workspace?.(workspaceManager.get_active_workspace?.())
-      };
-      props.get.forEach(name => win[name] = w.meta_window[`get_${name}`]?.());
-      props.has.forEach(name => win[name] = w.meta_window[`has_${name}`]?.());
-      // props.custom.forEach((fname, name) => { win[name] = w.meta_window[fname]?.() });
-      return win;
-    });
-
-    return JSON.stringify(winJsonArr);
-  }
-
-  GetFrameBounds(winid) {
-    let w = this._get_window_by_wid(winid);
-    if (w) {
-      const result = {
-        frame_bounds: w.meta_window.get_frame_bounds(),
-      }
-      return JSON.stringify(result);
-    } else {
-      throw new Error('Not found');
+    disable() {
+        this._dbus.flush()
+        this._dbus.unexport()
+        delete this._dbus
     }
-  }
 
-  GetFrameRect(winid) {
-    let w = this._get_window_by_wid(winid);
-    if (w) {
-      let frame = w.meta_window.get_frame_rect()
-      const result = {
-        "x": frame.x,
-        "y": frame.y,
-        "width": frame.width,
-        "height": frame.height
-      }
-      return JSON.stringify(result);
-    } else {
-      throw new Error('Not found');
+    _getWindowById(windowId) {
+        let win = global.get_window_actors().find((w) => w.meta_window.get_id() == windowId)
+        return win
     }
-  }
 
-  GetTitle(winid) {
-    let w = this._get_window_by_wid(winid);
-    if (w) {
-      return w.meta_window.get_title();
-    } else {
-      throw new Error('Not found');
+    Details(windowId) {
+        const w = this._getWindowById(windowId)
+        if (!w) {
+            throw new Error('Window not found')
+        }
+
+        const props = {
+            get: [
+                'wm_class',
+                'wm_class_instance',
+                'pid',
+                'id',
+                'maximized',
+                'frame_type',
+                'window_type',
+                'layer',
+                'monitor',
+                'role',
+                'title',
+            ],
+            has: ['focus'],
+            booleans: new Map([
+                ['canMove', 'allows_move'],
+                ['canResize', 'allows_resize'],
+                ['canClose', 'can_close'],
+                ['canMaximize', 'can_maximize'],
+                ['canMinimize', 'can_minimize'],
+                ['canShade', 'can_shade'],
+            ]),
+            rectangles: new Map([
+                ['currentMonitorWorkArea', 'get_work_area_current_monitor'],
+                ['allMonitorsWorkArea', 'get_work_area_all_monitors'],
+                ['windowArea', 'get_frame_rect'],
+            ]),
+        }
+
+        const workspaceManager = global.workspace_manager
+        const win = {
+            in_current_workspace: w.meta_window.located_on_workspace?.(workspaceManager.get_active_workspace?.()),
+        }
+
+        props.get.forEach((name) => (win[name] = w.meta_window[`get_${name}`]?.()))
+        props.has.forEach((name) => (win[name] = w.meta_window[`has_${name}`]?.()))
+        props.booleans.forEach((fname, name) => {
+            win[name] = w.meta_window[fname]?.()
+        })
+        props.rectangles.forEach((fname, name) => {
+            const mtkRectangle = w.meta_window[fname]?.()
+            const rect = {
+                x: mtkRectangle.x,
+                y: mtkRectangle.y,
+                width: mtkRectangle.width,
+                height: mtkRectangle.height,
+            }
+            win[name] = rect
+        })
+
+        return JSON.stringify(win)
     }
-  }
 
-  MoveToWorkspace(winid, workspaceNum) {
-    let win = this._get_window_by_wid(winid).meta_window;
-    if (win) {
-      win.change_workspace_by_index(workspaceNum, false);
-    } else {
-      throw new Error('Not found');
+    List() {
+        const win = global.get_window_actors()
+        const workspaceManager = global.workspace_manager
+
+        const props = {
+            get: [
+                'wm_class',
+                'wm_class_instance',
+                'pid',
+                'id',
+                'frame_type',
+                'window_type',
+                'width',
+                'height',
+                'x',
+                'y',
+            ],
+            has: ['focus'],
+            // custom: new Map([])
+        }
+
+        const winJsonArr = win.map((w) => {
+            const win = {
+                in_current_workspace: w.meta_window.located_on_workspace?.(workspaceManager.get_active_workspace?.()),
+            }
+            props.get.forEach((name) => (win[name] = w.meta_window[`get_${name}`]?.()))
+            props.has.forEach((name) => (win[name] = w.meta_window[`has_${name}`]?.()))
+            // props.custom.forEach((fname, name) => { win[name] = w.meta_window[fname]?.() });
+            return win
+        })
+
+        return JSON.stringify(winJsonArr)
     }
-  }
 
-  MoveResize(winid, x, y, width, height) {
-    let win = this._get_window_by_wid(winid);
-
-    if (win) {
-      if (win.meta_window.maximized_horizontally || win.meta_window.maximized_vertically) {
-        win.meta_window.unmaximize(3);
-      }
-
-      win.meta_window.move_resize_frame(1, x, y, width, height);
-    } else {
-      throw new Error('Not found');
+    GetFrameBounds(winid) {
+        let w = this._getWindowById(winid)
+        if (w) {
+            const result = {
+                frame_bounds: w.meta_window.get_frame_bounds(),
+            }
+            return JSON.stringify(result)
+        } else {
+            throw new Error('Not found')
+        }
     }
-  }
 
-  Resize(winid, width, height) {
-    let win = this._get_window_by_wid(winid);
-    if (win) {
-      if (win.meta_window.maximized_horizontally || win.meta_window.maximized_vertically) {
-        win.meta_window.unmaximize(3);
-      }
-      win.meta_window.move_resize_frame(1, win.get_x(), win.get_y(), width, height);
-    } else {
-      throw new Error('Not found');
+    GetFrameRect(winid) {
+        let w = this._getWindowById(winid)
+        if (w) {
+            let frame = w.meta_window.get_frame_rect()
+            const result = {
+                x: frame.x,
+                y: frame.y,
+                width: frame.width,
+                height: frame.height,
+            }
+            return JSON.stringify(result)
+        } else {
+            throw new Error('Not found')
+        }
     }
-  }
 
-  Move(winid, x, y) {
-    let win = this._get_window_by_wid(winid);
-    if (win) {
-      if (win.meta_window.maximized_horizontally || win.meta_window.maximized_vertically) {
-        win.meta_window.unmaximize(3);
-      }
-      win.meta_window.move_frame(1, x, y);
-    } else {
-      throw new Error('Not found');
+    GetTitle(winid) {
+        let w = this._getWindowById(winid)
+        if (w) {
+            return w.meta_window.get_title()
+        } else {
+            throw new Error('Not found')
+        }
     }
-  }
 
-  Maximize(winid) {
-    let win = this._get_window_by_wid(winid).meta_window;
-    if (win) {
-      win.maximize(3);
-    } else {
-      throw new Error('Not found');
+    MoveToWorkspace(winid, workspaceNum) {
+        let win = this._getWindowById(winid).meta_window
+        if (win) {
+            win.change_workspace_by_index(workspaceNum, false)
+        } else {
+            throw new Error('Not found')
+        }
     }
-  }
 
-  Minimize(winid) {
-    let win = this._get_window_by_wid(winid).meta_window;
-    if (win) {
-      win.minimize();
-    } else {
-      throw new Error('Not found');
-    }
-  }
+    Place(winid, x, y, width, height) {
+        let win = this._getWindowById(winid)
 
-  Unmaximize(winid) {
-    let win = this._get_window_by_wid(winid).meta_window;
-    if (win) {
-      win.unmaximize(3);
-    } else {
-      throw new Error('Not found');
-    }
-  }
+        if (win) {
+            if (win.meta_window.maximized_horizontally || win.meta_window.maximized_vertically) {
+                win.meta_window.unmaximize(3)
+            }
 
-  Unminimize(winid) {
-    let win = this._get_window_by_wid(winid).meta_window;
-    if (win) {
-      win.unminimize();
-    } else {
-      throw new Error('Not found');
+            win.meta_window.move_resize_frame(1, x, y, width, height)
+        } else {
+            throw new Error('Not found')
+        }
     }
-  }
 
-  Activate(winid) {
-    let win = this._get_window_by_wid(winid).meta_window;
-    if (win) {
-      win.activate(0);
-    } else {
-      throw new Error('Not found');
+    Resize(winid, width, height) {
+        let win = this._getWindowById(winid)
+        if (win) {
+            if (win.meta_window.maximized_horizontally || win.meta_window.maximized_vertically) {
+                win.meta_window.unmaximize(3)
+            }
+            win.meta_window.move_resize_frame(1, win.get_x(), win.get_y(), width, height)
+        } else {
+            throw new Error('Not found')
+        }
     }
-  }
 
-  Close(winid) {
-    let win = this._get_window_by_wid(winid).meta_window;
-    if (win) {
-      win.kill();
-      // win.delete(Math.floor(Date.now() / 1000));
-    } else {
-      throw new Error('Not found');
+    Move(winid, x, y) {
+        let win = this._getWindowById(winid)
+        if (win) {
+            if (win.meta_window.maximized_horizontally || win.meta_window.maximized_vertically) {
+                win.meta_window.unmaximize(3)
+            }
+            win.meta_window.move_frame(1, x, y)
+        } else {
+            throw new Error('Not found')
+        }
     }
-  }
+
+    Maximize(winid) {
+        let win = this._getWindowById(winid).meta_window
+        if (win) {
+            win.maximize(3)
+        } else {
+            throw new Error('Not found')
+        }
+    }
+
+    Minimize(winid) {
+        let win = this._getWindowById(winid).meta_window
+        if (win) {
+            win.minimize()
+        } else {
+            throw new Error('Not found')
+        }
+    }
+
+    Unmaximize(winid) {
+        let win = this._getWindowById(winid).meta_window
+        if (win) {
+            win.unmaximize(3)
+        } else {
+            throw new Error('Not found')
+        }
+    }
+
+    Unminimize(winid) {
+        let win = this._getWindowById(winid).meta_window
+        if (win) {
+            win.unminimize()
+        } else {
+            throw new Error('Not found')
+        }
+    }
+
+    Activate(winid) {
+        let win = this._getWindowById(winid).meta_window
+        if (win) {
+            win.activate(0)
+        } else {
+            throw new Error('Not found')
+        }
+    }
+
+    Close(winid) {
+        let win = this._getWindowById(winid).meta_window
+        if (win) {
+            win.kill()
+            // win.delete(Math.floor(Date.now() / 1000));
+        } else {
+            throw new Error('Not found')
+        }
+    }
 }
