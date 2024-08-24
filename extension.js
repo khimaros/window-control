@@ -46,7 +46,7 @@ const MR_DBUS_IFACE = `
          <arg type="u" direction="in" name="workspaceNum" />
       </method>
       <method name="Place">
-         <arg type="u" direction="in" name="winid" />
+         <arg type="u" direction="in" name="windowId" />
          <arg type="i" direction="in" name="x" />
          <arg type="i" direction="in" name="y" />
          <arg type="u" direction="in" name="width" />
@@ -98,6 +98,16 @@ export default class CallWindow extends Extension {
     _getWindowById(windowId) {
         let win = global.get_window_actors().find((w) => w.meta_window.get_id() == windowId)
         return win
+    }
+
+    _getMonitorWorkArea(win) {
+        const { x, y, width, height } = win.meta_window.get_work_area_current_monitor()
+        return {
+            x,
+            y,
+            width,
+            height,
+        }
     }
 
     Details(windowId) {
@@ -240,18 +250,44 @@ export default class CallWindow extends Extension {
         }
     }
 
-    Place(winid, x, y, width, height) {
-        let win = this._getWindowById(winid)
-
-        if (win) {
-            if (win.meta_window.maximized_horizontally || win.meta_window.maximized_vertically) {
-                win.meta_window.unmaximize(3)
-            }
-
-            win.meta_window.move_resize_frame(1, x, y, width, height)
-        } else {
-            throw new Error('Not found')
+    Place(windowId, x, y, width, height) {
+        const win = this._getWindowById(windowId)
+        if (!win) {
+            throw new Error('Window not found')
         }
+
+        const monitorWorkArea = this._getMonitorWorkArea(win)
+        if (!monitorWorkArea) {
+            throw new Error("Failed to get monitor's work area")
+        }
+
+        if (height >= monitorWorkArea.height && width >= monitorWorkArea.width) {
+            if (win.meta_window.can_maximize()) {
+                win.meta_window.maximize(3)
+                return
+            }
+            throw new Error('Provided height/width are out of bounds')
+        }
+
+        if (!win.meta_window.allows_move() || !win.meta_window.allows_resize()) {
+            win.meta_window.unmaximize(3)
+        }
+
+        if (width >= monitorWorkArea.width) {
+            win.meta_window.move_resize_frame(true, x, y, monitorWorkArea.width, height)
+            // Maximize horizontally
+            win.meta_window.maximize(1)
+            return
+        }
+
+        if (height >= monitorWorkArea.height) {
+            win.meta_window.move_resize_frame(true, x, y, width, monitorWorkArea.height)
+            // Maximize vertically
+            win.meta_window.maximize(2)
+            return
+        }
+
+        win.meta_window.move_resize_frame(true, x, y, width, height)
     }
 
     Resize(winid, width, height) {
