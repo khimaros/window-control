@@ -21,7 +21,7 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js'
 
 const MR_DBUS_IFACE = `
 <node>
-   <interface name="org.gnome.Shell.Extensions.CallWindow">
+   <interface name="org.gnome.Shell.Extensions.WindowCalls">
       <method name="List">
          <arg type="s" direction="out" name="win" />
       </method>
@@ -29,24 +29,20 @@ const MR_DBUS_IFACE = `
          <arg type="u" direction="in" name="winid" />
          <arg type="s" direction="out" name="win" />
       </method>
-      <method name="GetTitle">
-         <arg type="u" direction="in" name="winid" />
-         <arg type="s" direction="out" name="win" />
-      </method>
       <method name="GetFrameRect">
          <arg type="u" direction="in" name="winid" />
          <arg type="s" direction="out" name="frameRect" />
       </method>
-      <method name="GetFrameBounds">
+      <method name="GetBufferRect">
          <arg type="u" direction="in" name="winid" />
-         <arg type="s" direction="out" name="frameBounds" />
+         <arg type="s" direction="out" name="bufferRect" />
       </method>
       <method name="MoveToWorkspace">
          <arg type="u" direction="in" name="winid" />
          <arg type="u" direction="in" name="workspaceNum" />
       </method>
       <method name="Place">
-         <arg type="u" direction="in" name="windowId" />
+         <arg type="u" direction="in" name="winid" />
          <arg type="i" direction="in" name="x" />
          <arg type="i" direction="in" name="y" />
          <arg type="u" direction="in" name="width" />
@@ -74,19 +70,19 @@ const MR_DBUS_IFACE = `
       <method name="Unminimize">
          <arg type="u" direction="in" name="winid" />
       </method>
-      <method name="Activate">
-         <arg type="u" direction="in" name="winid" />
-      </method>
       <method name="Close">
          <arg type="u" direction="in" name="winid" />
+      </method>
+      <method name="GetFocusedMonitorDetails">
+         <arg type="s" direction="out" name="focusedMonitorDetails" />
       </method>
    </interface>
 </node>`
 
-export default class CallWindow extends Extension {
+export default class WindowCalls extends Extension {
     enable() {
         this._dbus = Gio.DBusExportedObject.wrapJSObject(MR_DBUS_IFACE, this)
-        this._dbus.export(Gio.DBus.session, '/org/gnome/Shell/Extensions/CallWindow')
+        this._dbus.export(Gio.DBus.session, '/org/gnome/Shell/Extensions/WindowCalls')
     }
 
     disable() {
@@ -95,9 +91,10 @@ export default class CallWindow extends Extension {
         delete this._dbus
     }
 
-    _getWindowById(windowId) {
-        let win = global.get_window_actors().find((w) => w.meta_window.get_id() == windowId)
-        return win
+    _getWindowById(winid) {
+        let windows = global.get_window_actors()
+        let metaWindow = windows.find((w) => w.meta_window.get_id() == winid)
+        return metaWindow ?? null
     }
 
     _getMonitorWorkArea(win) {
@@ -110,8 +107,19 @@ export default class CallWindow extends Extension {
         }
     }
 
-    Details(windowId) {
-        const w = this._getWindowById(windowId)
+    //_getWindowDecorDiff(win) {
+    //    const winBufferRect = win.meta_window.get_buffer_rect()
+    //    const winFrameRect = win.meta_window.get_frame_rect()
+    //    return {
+    //        x: winBufferRect.x - winFrameRect.x,
+    //        y: winBufferRect.y - winFrameRect.y,
+    //        width: winBufferRect.width - winFrameRect.width,
+    //        height: winBufferRect.height - winFrameRect.height,
+    //    }
+    //}
+
+    Details(winid) {
+        const w = this._getWindowById(winid)
         if (!w) {
             throw new Error('Window not found')
         }
@@ -157,12 +165,12 @@ export default class CallWindow extends Extension {
             win[name] = w.meta_window[fname]?.()
         })
         props.rectangles.forEach((fname, name) => {
-            const mtkRectangle = w.meta_window[fname]?.()
+            const monitorRectangle = w.meta_window[fname]?.()
             const rect = {
-                x: mtkRectangle.x,
-                y: mtkRectangle.y,
-                width: mtkRectangle.width,
-                height: mtkRectangle.height,
+                x: monitorRectangle.x,
+                y: monitorRectangle.y,
+                width: monitorRectangle.width,
+                height: monitorRectangle.height,
             }
             win[name] = rect
         })
@@ -171,7 +179,7 @@ export default class CallWindow extends Extension {
     }
 
     List() {
-        const win = global.get_window_actors()
+        const windows = global.get_window_actors()
         const workspaceManager = global.workspace_manager
 
         const props = {
@@ -188,48 +196,49 @@ export default class CallWindow extends Extension {
                 'y',
             ],
             has: ['focus'],
-            // custom: new Map([])
         }
 
-        const winJsonArr = win.map((w) => {
+        const winJsonArr = windows.map((w) => {
             const win = {
                 in_current_workspace: w.meta_window.located_on_workspace?.(workspaceManager.get_active_workspace?.()),
             }
             props.get.forEach((name) => (win[name] = w.meta_window[`get_${name}`]?.()))
             props.has.forEach((name) => (win[name] = w.meta_window[`has_${name}`]?.()))
-            // props.custom.forEach((fname, name) => { win[name] = w.meta_window[fname]?.() });
             return win
         })
 
         return JSON.stringify(winJsonArr)
     }
 
-    GetFrameBounds(winid) {
-        let w = this._getWindowById(winid)
-        if (w) {
-            const result = {
-                frame_bounds: w.meta_window.get_frame_bounds(),
-            }
-            return JSON.stringify(result)
-        } else {
-            throw new Error('Not found')
+    GetBufferRect(winid) {
+        let win = this._getWindowById(winid)
+        if (!win) {
+            throw new Error('Window not found')
         }
+        let { x, y, width, height } = w.meta_window.get_buffer_rect()
+        const result = {
+            x,
+            y,
+            width,
+            height,
+        }
+        return JSON.stringify(result)
     }
 
     GetFrameRect(winid) {
-        let w = this._getWindowById(winid)
-        if (w) {
-            let frame = w.meta_window.get_frame_rect()
-            const result = {
-                x: frame.x,
-                y: frame.y,
-                width: frame.width,
-                height: frame.height,
-            }
-            return JSON.stringify(result)
-        } else {
-            throw new Error('Not found')
+        let win = this._getWindowById(winid)
+        if (!win) {
+            throw new Error('Window not found')
         }
+
+        let { x, y, width, height } = win.meta_window.get_frame_rect()
+        const result = {
+            x,
+            y,
+            width,
+            height,
+        }
+        return JSON.stringify(result)
     }
 
     GetTitle(winid) {
@@ -250,8 +259,8 @@ export default class CallWindow extends Extension {
         }
     }
 
-    Place(windowId, x, y, width, height) {
-        const win = this._getWindowById(windowId)
+    Place(winid, x, y, width, height) {
+        const win = this._getWindowById(winid)
         if (!win) {
             throw new Error('Window not found')
         }
@@ -269,8 +278,17 @@ export default class CallWindow extends Extension {
             throw new Error('Provided height/width are out of bounds')
         }
 
-        if (!win.meta_window.allows_move() || !win.meta_window.allows_resize()) {
+        if (
+            !win.meta_window.allows_move() ||
+            !win.meta_window.allows_resize() ||
+            win.meta_window.maximized_horizontally ||
+            win.meta_window.maximized_vertically
+        ) {
             win.meta_window.unmaximize(3)
+            if (!win.meta_window.allows_move() || !win.meta_window.allows_resize()) {
+                win.meta_window.maximize(3)
+                throw new Error('Window is not moveable or resizeable')
+            }
         }
 
         if (width >= monitorWorkArea.width) {
@@ -300,6 +318,18 @@ export default class CallWindow extends Extension {
         } else {
             throw new Error('Not found')
         }
+    }
+
+    GetFocusedMonitorDetails() {
+        const monitorId = global.display.get_current_monitor()
+        const monitorGeometryMtkRect = global.display.get_monitor_geometry(monitorId)
+        const monitorGeometry = {
+            x: monitorGeometryMtkRect.x,
+            y: monitorGeometryMtkRect.y,
+            width: monitorGeometryMtkRect.width,
+            height: monitorGeometryMtkRect.height,
+        }
+        return JSON.stringify({ monitorId, monitorGeometry })
     }
 
     Move(winid, x, y) {
@@ -363,7 +393,6 @@ export default class CallWindow extends Extension {
         let win = this._getWindowById(winid).meta_window
         if (win) {
             win.kill()
-            // win.delete(Math.floor(Date.now() / 1000));
         } else {
             throw new Error('Not found')
         }
