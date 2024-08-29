@@ -1,6 +1,6 @@
 {
     "name": "Gnome Window Calls",
-    "description": "Adds dbus calls which can return list of windows, move, resize, close them etc",
+    "description": "Provides a D-Bus interface for managing and controlling windows, including listing, resizing, moving, and workspace management",
     "uuid": "gnome-window-calls@gnikolaos.gr",
     "shell-version": ["45", "46"],
     "version": 0.1,
