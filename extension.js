@@ -48,11 +48,6 @@ const MR_DBUS_IFACE = `
          <arg type="u" direction="in" name="width" />
          <arg type="u" direction="in" name="height" />
       </method>
-      <method name="Resize">
-         <arg type="u" direction="in" name="winid" />
-         <arg type="u" direction="in" name="width" />
-         <arg type="u" direction="in" name="height" />
-      </method>
       <method name="Move">
          <arg type="u" direction="in" name="winid" />
          <arg type="i" direction="in" name="x" />
@@ -93,11 +88,11 @@ export default class WindowCalls extends Extension {
 
     _getWindowById(winid) {
         let windows = global.get_window_actors()
-        let metaWindow = windows.find((w) => w.meta_window.get_id() == winid)
+        let metaWindow = windows.find((win) => win.meta_window.get_id() == winid)
         return metaWindow ?? null
     }
 
-    _getMonitorWorkArea(win) {
+    _getMonitorWorkAreaByWindow(win) {
         const { x, y, width, height } = win.meta_window.get_work_area_current_monitor()
         return {
             x,
@@ -106,17 +101,6 @@ export default class WindowCalls extends Extension {
             height,
         }
     }
-
-    //_getWindowDecorDiff(win) {
-    //    const winBufferRect = win.meta_window.get_buffer_rect()
-    //    const winFrameRect = win.meta_window.get_frame_rect()
-    //    return {
-    //        x: winBufferRect.x - winFrameRect.x,
-    //        y: winBufferRect.y - winFrameRect.y,
-    //        width: winBufferRect.width - winFrameRect.width,
-    //        height: winBufferRect.height - winFrameRect.height,
-    //    }
-    //}
 
     Details(winid) {
         const w = this._getWindowById(winid)
@@ -215,7 +199,7 @@ export default class WindowCalls extends Extension {
         if (!win) {
             throw new Error('Window not found')
         }
-        let { x, y, width, height } = w.meta_window.get_buffer_rect()
+        let { x, y, width, height } = win.meta_window.get_buffer_rect()
         const result = {
             x,
             y,
@@ -242,9 +226,9 @@ export default class WindowCalls extends Extension {
     }
 
     GetTitle(winid) {
-        let w = this._getWindowById(winid)
-        if (w) {
-            return w.meta_window.get_title()
+        let win = this._getWindowById(winid)
+        if (win) {
+            return win.meta_window.get_title()
         } else {
             throw new Error('Not found')
         }
@@ -265,7 +249,7 @@ export default class WindowCalls extends Extension {
             throw new Error('Window not found')
         }
 
-        const monitorWorkArea = this._getMonitorWorkArea(win)
+        const monitorWorkArea = this._getMonitorWorkAreaByWindow(win)
         if (!monitorWorkArea) {
             throw new Error("Failed to get monitor's work area")
         }
@@ -308,28 +292,16 @@ export default class WindowCalls extends Extension {
         win.meta_window.move_resize_frame(true, x, y, width, height)
     }
 
-    Resize(winid, width, height) {
-        let win = this._getWindowById(winid)
-        if (win) {
-            if (win.meta_window.maximized_horizontally || win.meta_window.maximized_vertically) {
-                win.meta_window.unmaximize(3)
-            }
-            win.meta_window.move_resize_frame(1, win.get_x(), win.get_y(), width, height)
-        } else {
-            throw new Error('Not found')
-        }
-    }
-
     GetFocusedMonitorDetails() {
-        const monitorId = global.display.get_current_monitor()
-        const monitorGeometryMtkRect = global.display.get_monitor_geometry(monitorId)
-        const monitorGeometry = {
+        const id = global.display.get_current_monitor()
+        const monitorGeometryMtkRect = global.display.get_monitor_geometry(id)
+        const geometry = {
             x: monitorGeometryMtkRect.x,
             y: monitorGeometryMtkRect.y,
             width: monitorGeometryMtkRect.width,
             height: monitorGeometryMtkRect.height,
         }
-        return JSON.stringify({ monitorId, monitorGeometry })
+        return JSON.stringify({ id, geometry })
     }
 
     Move(winid, x, y) {
@@ -375,15 +347,6 @@ export default class WindowCalls extends Extension {
         let win = this._getWindowById(winid).meta_window
         if (win) {
             win.unminimize()
-        } else {
-            throw new Error('Not found')
-        }
-    }
-
-    Activate(winid) {
-        let win = this._getWindowById(winid).meta_window
-        if (win) {
-            win.activate(0)
         } else {
             throw new Error('Not found')
         }
