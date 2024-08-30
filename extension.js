@@ -14,6 +14,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  * SPDX-License-Identifier: GPL-2.0-or-later
+ *
+ * Based on the initial version by ickyicky (https://github.com/ickyicky/window-calls),
+ *
  */
 
 import Gio from 'gi://Gio'
@@ -21,13 +24,13 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js'
 
 const MR_DBUS_IFACE = `
 <node>
-   <interface name="org.gnome.Shell.Extensions.WindowCalls">
+   <interface name="org.gnome.Shell.Extensions.GnomeWindowCalls">
       <method name="List">
-         <arg type="s" direction="out" name="win" />
+         <arg type="s" direction="out" name="windowList" />
       </method>
       <method name="Details">
          <arg type="u" direction="in" name="winid" />
-         <arg type="s" direction="out" name="win" />
+         <arg type="s" direction="out" name="windowDetails" />
       </method>
       <method name="GetFrameRect">
          <arg type="u" direction="in" name="winid" />
@@ -74,10 +77,10 @@ const MR_DBUS_IFACE = `
    </interface>
 </node>`
 
-export default class WindowCalls extends Extension {
+export default class GnomeWindowCalls extends Extension {
     enable() {
         this._dbus = Gio.DBusExportedObject.wrapJSObject(MR_DBUS_IFACE, this)
-        this._dbus.export(Gio.DBus.session, '/org/gnome/Shell/Extensions/WindowCalls')
+        this._dbus.export(Gio.DBus.session, '/org/gnome/Shell/Extensions/GnomeWindowCalls')
     }
 
     disable() {
@@ -103,25 +106,13 @@ export default class WindowCalls extends Extension {
     }
 
     Details(winid) {
-        const w = this._getWindowById(winid)
-        if (!w) {
+        const win = this._getWindowById(winid)
+        if (!win) {
             throw new Error('Window not found')
         }
 
         const props = {
-            get: [
-                'wm_class',
-                'wm_class_instance',
-                'pid',
-                'id',
-                'maximized',
-                'frame_type',
-                'window_type',
-                'layer',
-                'monitor',
-                'role',
-                'title',
-            ],
+            get: ['id', 'monitor', 'wm_class', 'wm_class_instance', 'maximized'],
             has: ['focus'],
             booleans: new Map([
                 ['canMove', 'allows_move'],
@@ -129,37 +120,37 @@ export default class WindowCalls extends Extension {
                 ['canClose', 'can_close'],
                 ['canMaximize', 'can_maximize'],
                 ['canMinimize', 'can_minimize'],
-                ['canShade', 'can_shade'],
             ]),
             rectangles: new Map([
+                ['windowArea', 'get_frame_rect'],
                 ['currentMonitorWorkArea', 'get_work_area_current_monitor'],
                 ['allMonitorsWorkArea', 'get_work_area_all_monitors'],
-                ['windowArea', 'get_frame_rect'],
             ]),
         }
 
-        const workspaceManager = global.workspace_manager
-        const win = {
-            in_current_workspace: w.meta_window.located_on_workspace?.(workspaceManager.get_active_workspace?.()),
-        }
-
-        props.get.forEach((name) => (win[name] = w.meta_window[`get_${name}`]?.()))
-        props.has.forEach((name) => (win[name] = w.meta_window[`has_${name}`]?.()))
+        const windowDetails = {}
+        props.get.forEach((name) => (windowDetails[name] = win.meta_window[`get_${name}`]?.()))
+        props.has.forEach((name) => (windowDetails[name] = win.meta_window[`has_${name}`]?.()))
         props.booleans.forEach((fname, name) => {
-            win[name] = w.meta_window[fname]?.()
+            windowDetails[name] = win.meta_window[fname]?.()
         })
         props.rectangles.forEach((fname, name) => {
-            const monitorRectangle = w.meta_window[fname]?.()
+            const monitorRectangle = win.meta_window[fname]?.()
             const rect = {
                 x: monitorRectangle.x,
                 y: monitorRectangle.y,
                 width: monitorRectangle.width,
                 height: monitorRectangle.height,
             }
-            win[name] = rect
+            windowDetails[name] = rect
         })
 
-        return JSON.stringify(win)
+        const workspaceManager = global.workspace_manager
+        windowDetails.in_current_workspace = win.meta_window.located_on_workspace?.(
+            workspaceManager.get_active_workspace?.()
+        )
+
+        return JSON.stringify(windowDetails)
     }
 
     List() {
@@ -167,31 +158,19 @@ export default class WindowCalls extends Extension {
         const workspaceManager = global.workspace_manager
 
         const props = {
-            get: [
-                'wm_class',
-                'wm_class_instance',
-                'pid',
-                'id',
-                'frame_type',
-                'window_type',
-                'width',
-                'height',
-                'x',
-                'y',
-            ],
+            get: ['id', 'monitor'],
             has: ['focus'],
         }
 
-        const winJsonArr = windows.map((w) => {
-            const win = {
-                in_current_workspace: w.meta_window.located_on_workspace?.(workspaceManager.get_active_workspace?.()),
-            }
+        const windowList = windows.map((w) => {
+            const win = {}
             props.get.forEach((name) => (win[name] = w.meta_window[`get_${name}`]?.()))
             props.has.forEach((name) => (win[name] = w.meta_window[`has_${name}`]?.()))
+            win.in_current_workspace = w.meta_window.located_on_workspace?.(workspaceManager.get_active_workspace?.())
             return win
         })
 
-        return JSON.stringify(winJsonArr)
+        return JSON.stringify(windowList)
     }
 
     GetBufferRect(winid) {
