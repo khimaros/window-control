@@ -1,4 +1,4 @@
-NAME = gnome-window-calls
+NAME = window-commander
 UUID = $(NAME)@gnikolaos.gr
 
 .PHONY: build install remove clean

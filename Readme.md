@@ -1,4 +1,4 @@
-# Gnome Window Calls
+# Window Commander
 Note: Eventually this will be cleaned up in order to provide only what is nesseccary for the [ulauncher-window-manager](https://github.com/gnikolaos/ulauncher-window-manager) to work properly.
 So, if you don't use the ulauncher-window-manager, the extension [window-call](https://github.com/ickyicky/window-calls) by ickyicky might be a better option for you.
 
@@ -14,14 +14,14 @@ method in [issue #1](https://github.com/ickyicky/window-calls/issues/1);
 
 ### Installation
 
-Install extension from [gnome extensions page](https://extensions.gnome.org/extension/4724/window-calls/).
+Install extension from [gnome extensions page](https://extensions.gnome.org/extension/7302/window-commander/).
 
 ### Listing windows
 
 To get all active windows simply run from terminal:
 
 ```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCalls --method org.gnome.Shell.Extensions.WindowCalls.List
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.List
 ```
 
 Call returns list of window properties. Example output:
@@ -49,7 +49,7 @@ Call returns list of window properties. Example output:
 To move given window to some workspace, in my case window with id 2205525109 to workspace number 4:
 
 ```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCalls --method org.gnome.Shell.Extensions.WindowCalls.MoveToWorkspace 2205525109 4
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.MoveToWorkspace 2205525109 4
 ```
 
 ### Getting additional information about window
@@ -63,7 +63,7 @@ gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Exten
 Both methods should be invoked giving desired window's id as a parameter. Example usages:
 
 ```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCalls --method org.gnome.Shell.Extensions.WindowCalls.Details 2205525109
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.Details 2205525109
 ```
 
 Example result of calling `Details`:
@@ -111,7 +111,7 @@ Resizing and moving can be done either together or separetely. There are 3 metho
 When calling `Move` or `Place` you sometimes want to pass negative x or y value. In order to do so, you need to add `--` before arguments in gdbus call like so:
 
 ```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCalls --method org.gnome.Shell.Extensions.WindowCalls.Move -- 12345678908 -32 -13
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.Move -- 12345678908 -32 -13
 ```
 
 ### Maximizing, minimizing, activating, closing
@@ -133,33 +133,33 @@ You can realize the full power of this extension when you use it with `jq` or si
 
 For example, To view all windows in json:
 ```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCalls --method org.gnome.Shell.Extensions.WindowCalls.List | cut -c 3- | rev | cut -c4- | rev | jq .
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.List | cut -c 3- | rev | cut -c4- | rev | jq .
 ```
 To get windowID of all windows in current workspace:
 ```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCalls --method org.gnome.Shell.Extensions.WindowCalls.List | cut -c 3- | rev | cut -c4- | rev | jq -c '.[] | select (.in_current_workspace == true) | .id'
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.List | cut -c 3- | rev | cut -c4- | rev | jq -c '.[] | select (.in_current_workspace == true) | .id'
 ```
 To get windowID and wm_class of all windows in current workspace:
 ```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCalls --method org.gnome.Shell.Extensions.WindowCalls.List | cut -c 3- | rev | cut -c4- | rev | jq -c '[.[] | select (.in_current_workspace == true) | {id: .id,wm_class: .wm_class}]'
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.List | cut -c 3- | rev | cut -c4- | rev | jq -c '[.[] | select (.in_current_workspace == true) | {id: .id,wm_class: .wm_class}]'
 ```
 To get windowID and wm_class of all visible window:
 ```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCalls --method org.gnome.Shell.Extensions.WindowCalls.List | cut -c 3- | rev | cut -c4- | rev | jq -c '[.[] | select (.frame_type == 0 and .window_type == 0) | {id: .id,wm_class: .wm_class}]'
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.List | cut -c 3- | rev | cut -c4- | rev | jq -c '[.[] | select (.frame_type == 0 and .window_type == 0) | {id: .id,wm_class: .wm_class}]'
 ```
 To get windowID and wm_class of all visible window in current workspace:
 ```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCalls --method org.gnome.Shell.Extensions.WindowCalls.List | cut -c 3- | rev | cut -c4- | rev | jq -c '[.[] | select (.in_current_workspace == true and .frame_type == 0 and .window_type == 0) | {id: .id,wm_class: .wm_class}]' | jq .
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.List | cut -c 3- | rev | cut -c4- | rev | jq -c '[.[] | select (.in_current_workspace == true and .frame_type == 0 and .window_type == 0) | {id: .id,wm_class: .wm_class}]' | jq .
 ```
 ### Calls using gawk
 
 You can also use gawk to capture desired JSON values. It has to be paired with sed in order to replace escaping done by qawk on quotes. For `List` gawk should look for JSON list:
 
 ```sh
-dbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCalls --method org.gnome.Shell.Extensions.WindowCalls.List | gawk 'match($0, /\[.*\]/, a) {print a[0]}' | sed 's/\\"/"/g' | jq .
+dbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.List | gawk 'match($0, /\[.*\]/, a) {print a[0]}' | sed 's/\\"/"/g' | jq .
 ```
 And for `Details` you want to find just one dictionary:
 
 ```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCalls --method org.gnome.Shell.Extensions.WindowCalls.Details 1610090767 | gawk 'match($0, /\{.*\}/, a) {print a[0]}' | sed 's/\\"/"/g' | jq .
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.Details 1610090767 | gawk 'match($0, /\{.*\}/, a) {print a[0]}' | sed 's/\\"/"/g' | jq .
 ```

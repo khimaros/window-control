@@ -24,7 +24,7 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js'
 
 const MR_DBUS_IFACE = `
 <node>
-   <interface name="org.gnome.Shell.Extensions.GnomeWindowCalls">
+   <interface name="org.gnome.Shell.Extensions.WindowCommander">
       <method name="List">
          <arg type="s" direction="out" name="windowList" />
       </method>
@@ -77,10 +77,10 @@ const MR_DBUS_IFACE = `
    </interface>
 </node>`
 
-export default class GnomeWindowCalls extends Extension {
+export default class WindowCommander extends Extension {
     enable() {
         this._dbus = Gio.DBusExportedObject.wrapJSObject(MR_DBUS_IFACE, this)
-        this._dbus.export(Gio.DBus.session, '/org/gnome/Shell/Extensions/GnomeWindowCalls')
+        this._dbus.export(Gio.DBus.session, '/org/gnome/Shell/Extensions/WindowCommander')
     }
 
     disable() {
