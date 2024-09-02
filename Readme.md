@@ -44,12 +44,12 @@ Call returns list of window properties. Example output:
 ]
 ```
 
-### Moving windows between workspaces
+### Moving window to the next or previous workspace
 
-To move given window to some workspace, in my case window with id 2205525109 to workspace number 4:
+To move the given window to the next workspace:
 
 ```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.MoveToWorkspace 2205525109 4
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.MoveToWorkspace 2205525109 right
 ```
 
 ### Getting additional information about window
