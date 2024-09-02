@@ -42,7 +42,7 @@ const MR_DBUS_IFACE = `
       </method>
       <method name="MoveToWorkspace">
          <arg type="u" direction="in" name="winid" />
-         <arg type="s" direction="in" name="action" />
+         <arg type="s" direction="in" name="direction" />
       </method>
       <method name="Place">
          <arg type="u" direction="in" name="winid" />
@@ -213,8 +213,8 @@ export default class WindowCommander extends Extension {
         }
     }
 
-    MoveToWorkspace(winid, action) {
-        if (action !== 'left' && action !== 'right') {
+    MoveToWorkspace(winid, direction) {
+        if (direction !== 'left' && direction !== 'right') {
             throw new Error('Invalid action')
         }
 
@@ -224,8 +224,8 @@ export default class WindowCommander extends Extension {
         }
 
         const metaWorkspace = win.get_workspace()
-        const motionDirection = action === 'left' ? -3 : -4
-        const targetWorkspace = metaWorkspace.get_neighbor(motionDirection)
+        const metaMotionDirection = direction === 'left' ? -3 : -4
+        const targetWorkspace = metaWorkspace.get_neighbor(metaMotionDirection)
         if (!targetWorkspace) {
             throw new Error('No neighbor workspace found')
         }
