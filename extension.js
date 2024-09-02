@@ -42,7 +42,7 @@ const MR_DBUS_IFACE = `
       </method>
       <method name="MoveToWorkspace">
          <arg type="u" direction="in" name="winid" />
-         <arg type="u" direction="in" name="workspaceNum" />
+         <arg type="s" direction="in" name="action" />
       </method>
       <method name="Place">
          <arg type="u" direction="in" name="winid" />
@@ -213,13 +213,25 @@ export default class WindowCommander extends Extension {
         }
     }
 
-    MoveToWorkspace(winid, workspaceNum) {
-        let win = this._getWindowById(winid).meta_window
-        if (win) {
-            win.change_workspace_by_index(workspaceNum, false)
-        } else {
-            throw new Error('Not found')
+    MoveToWorkspace(winid, action) {
+        if (action !== 'left' && action !== 'right') {
+            throw new Error('Invalid action')
         }
+
+        const win = this._getWindowById(winid).meta_window
+        if (!win) {
+            throw new Error('Window not found')
+        }
+
+        const metaWorkspace = win.get_workspace()
+        const motionDirection = action === 'left' ? -3 : -4
+        const targetWorkspace = metaWorkspace.get_neighbor(motionDirection)
+        if (!targetWorkspace) {
+            throw new Error('No neighbor workspace found')
+        }
+
+        win.change_workspace(targetWorkspace)
+        targetWorkspace.activate_with_focus(win, global.get_current_time())
     }
 
     Place(winid, x, y, width, height) {
