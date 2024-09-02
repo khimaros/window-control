@@ -90,8 +90,8 @@ export default class WindowCommander extends Extension {
     }
 
     _getWindowById(winid) {
-        let windows = global.get_window_actors()
-        let metaWindow = windows.find((win) => win.meta_window.get_id() == winid)
+        const windows = global.get_window_actors()
+        const metaWindow = windows.find((win) => win.meta_window.get_id() == winid)
         return metaWindow ?? null
     }
 
@@ -174,11 +174,11 @@ export default class WindowCommander extends Extension {
     }
 
     GetBufferRect(winid) {
-        let win = this._getWindowById(winid)
+        const win = this._getWindowById(winid)
         if (!win) {
             throw new Error('Window not found')
         }
-        let { x, y, width, height } = win.meta_window.get_buffer_rect()
+        const { x, y, width, height } = win.meta_window.get_buffer_rect()
         const result = {
             x,
             y,
@@ -189,7 +189,7 @@ export default class WindowCommander extends Extension {
     }
 
     GetFrameRect(winid) {
-        let win = this._getWindowById(winid)
+        const win = this._getWindowById(winid)
         if (!win) {
             throw new Error('Window not found')
         }
@@ -308,47 +308,47 @@ export default class WindowCommander extends Extension {
     }
 
     Maximize(winid) {
-        let win = this._getWindowById(winid).meta_window
-        if (win) {
-            win.maximize(3)
-        } else {
-            throw new Error('Not found')
+        const win = this._getWindowById(winid).meta_window
+        if (!win) {
+            throw new Error('Window not found')
         }
+
+        win.maximize(3)
     }
 
     Minimize(winid) {
-        let win = this._getWindowById(winid).meta_window
-        if (win) {
-            win.minimize()
-        } else {
-            throw new Error('Not found')
+        const win = this._getWindowById(winid).meta_window
+        if (!win) {
+            throw new Error('Window not found')
         }
+
+        win.minimize()
     }
 
     Unmaximize(winid) {
-        let win = this._getWindowById(winid).meta_window
-        if (win) {
-            win.unmaximize(3)
-        } else {
-            throw new Error('Not found')
+        const win = this._getWindowById(winid).meta_window
+        if (!win) {
+            throw new Error('Window not found')
         }
+
+        win.unmaximize(3)
     }
 
     Unminimize(winid) {
-        let win = this._getWindowById(winid).meta_window
-        if (win) {
-            win.unminimize()
-        } else {
-            throw new Error('Not found')
+        const win = this._getWindowById(winid).meta_window
+        if (!win) {
+            throw new Error('Window not found')
         }
+
+        win.unminimize()
     }
 
     Close(winid) {
-        let win = this._getWindowById(winid).meta_window
-        if (win) {
-            win.kill()
-        } else {
-            throw new Error('Not found')
+        const win = this._getWindowById(winid).meta_window
+        if (!win) {
+            throw new Error('Window not found')
         }
+
+        win.kill()
     }
 }
