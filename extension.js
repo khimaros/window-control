@@ -28,7 +28,7 @@ const MR_DBUS_IFACE = `
       <method name="List">
          <arg type="s" direction="out" name="windowList" />
       </method>
-      <method name="Details">
+      <method name="GetDetails">
          <arg type="u" direction="in" name="winid" />
          <arg type="s" direction="out" name="windowDetails" />
       </method>
@@ -105,7 +105,7 @@ export default class WindowCommander extends Extension {
         }
     }
 
-    Details(winid) {
+    GetDetails(winid) {
         const win = this._getWindowById(winid)
         if (!win) {
             throw new Error('Window not found')
