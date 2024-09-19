@@ -1,165 +1,183 @@
 # Window Commander
-Note: Eventually this will be cleaned up in order to provide only what is nesseccary for the [ulauncher-window-manager](https://github.com/gnikolaos/ulauncher-window-manager) to work properly.
-So, if you don't use the ulauncher-window-manager, the extension [window-call](https://github.com/ickyicky/window-calls) by ickyicky might be a better option for you.
+This extension aims to provide only what is neccessary for the [ulauncher-window-manager](https://github.com/gnikolaos/ulauncher-window-manager) to work properly.
+If you don't plan to use the [ulauncher-window-manager](https://github.com/gnikolaos/ulauncher-window-manager), the extension [window-call](https://github.com/ickyicky/window-calls) by ickyicky might be a better option for you.
 
-This extension allows you to list current windows with some of their properties from command line, super usefull for Wayland to get current focused window.
+## Installation
 
-Also, it allows you to move given window to different workspace.
-
-Credit to [dceee](https://github.com/dceee) for providing example code in [this discussion](https://gist.github.com/rbreaves/257c3edfa301786e66e964d7ac036269)
-and to [blueray453](https://github.com/blueray453) for requesting additional functions and providing code example for additional properties returned by List
-method in [issue #1](https://github.com/ickyicky/window-calls/issues/1);
+1. Install from [gnome extensions page](https://extensions.gnome.org/extension/7302/window-commander/).
+2. Or clone the repo and run ```make install```
 
 ## Usage
 
-### Installation
+### List Windows
 
-Install extension from [gnome extensions page](https://extensions.gnome.org/extension/7302/window-commander/).
-
-### Listing windows
-
-To get all active windows simply run from terminal:
+To get a list of all the active windows run from terminal:
 
 ```sh
 gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.List
 ```
 
-Call returns list of window properties. Example output:
+Example output:
 ```json
 [
-  {
-    "wm_class": "Caprine",
-    "wm_class_instance": "caprine",
-    "pid": 62901,
-    "id": 1610090767,
-    "frame_type": 0,
-    "window_type": 0,
-    "width": 1910,
-    "height": 2100,
-    "x": 10,
-    "y": 50,
-    "in_current_workspace": false,
-    "monitor": 0
-  }
+    {
+        "id": 1139090783,
+        "monitor": 0,
+        "focus": false,
+        "in_current_workspace": false,
+    },
+    {
+        "id": 8734090787,
+        "monitor": 0,
+        "focus": true,
+        "in_current_workspace": true,
+    }
 ]
 ```
 
-### Moving window to the next or previous workspace
+### Move window to next or previous workspace
 
-To move the given window to the next workspace:
-
-```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.MoveToWorkspace 2205525109 right
-```
-
-### Getting additional information about window
-
-`List` method only returns basic information about the window. There are two more methods:
-
-- `Details`, which returns detailed information about window in JSON format
-- `GetTitle`, which returns windows title. Title can contain special characters, which can break ceratin tools like `jq` when parsing JSON
-- `GetFrameBounds`, which returns windows frame bounds in JSON dictionary. This stopped working around Gnome 43, so I moved this property to additional callable function
-
-Both methods should be invoked giving desired window's id as a parameter. Example usages:
+To move the given window to the next(right or left for the previous) workspace:
 
 ```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.Details 2205525109
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.MoveToWorkspace 8734090787 right
 ```
 
-Example result of calling `Details`:
+### Get extra information about a window
+
+- `GetDetails`, which returns detailed information about window in JSON format
+- `GetFrameRect`, which returns windows title. Title can contain special characters, which can break ceratin tools like `jq` when parsing JSON
+- `GetBufferRect`, which returns windows frame bounds in JSON dictionary. This stopped working around Gnome 43, so I moved this property to additional callable function
+
+These methods should be invoked giving the desired window's id as a parameter. Example usages:
+
+```sh
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.GetDetails 8734090787
+```
+
+Example result of calling `GetDetails`:
 ```json
 {
-  "wm_class": "Caprine",
-  "wm_class_instance": "caprine",
-  "pid": 62901,
-  "id": 1610090767,
-  "width": 1910,
-  "height": 2100,
-  "x": 10,
-  "y": 50,
-  "maximized": 0,
-  "focus": false,
-  "in_current_workspace": false,
-  "moveable": true,
-  "resizeable": true,
-  "canclose": true,
-  "canmaximize": true,
-  "canminimize": true,
-  "canshade": true,
-  "display": {},
-  "frame_type": 0,
-  "window_type": 0,
-  "layer": 2,
-  "monitor": 0,
-  "role": "browser-window",
-  "area": {},
-  "area_all": {},
-  "area_cust": {}
+    "id": 8734090787,
+    "monitor": 0,
+    "wm_class": "gnome-terminal-server",
+    "wm_class_instance": "gnome-terminal-server",
+    "maximized": 3,
+    "focus": true,
+    "canMove": true,
+    "canResize": false,
+    "canClose": true,
+    "canMaximize": true,
+    "canMinimize": true,
+    "windowArea": {
+        "x": 0,
+        "y": 34,
+        "width": 1920,
+        "height": 1166
+    },
+    "currentMonitorWorkArea": {
+        "x": 0,
+        "y": 34,
+        "width": 1920,
+        "height": 1166
+    },
+    "allMonitorsWorkArea": {
+        "x": 0,
+        "y": 34,
+        "width": 1920,
+        "height": 1166
+    },
+    "in_current_workspace": true
 }
 ```
 
-### Resizing and moving
-
-Resizing and moving can be done either together or separetely. There are 3 methods providing this functionality:
-
-1. `Resize` which takes 3 parameters: winid width height
-2. `Place` which takes 3 parameters: winid x y width height
-3. `Move` which takes 3 parameters: winid x y
-
-#### Negative parameter values
-
-When calling `Move` or `Place` you sometimes want to pass negative x or y value. In order to do so, you need to add `--` before arguments in gdbus call like so:
-
 ```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.Move -- 12345678908 -32 -13
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.GetFrameRect 8734090787
 ```
 
-### Maximizing, minimizing, activating, closing
+or
 
-Ther are 6 methods providing such functionality:
+```sh
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.GetBufferRect 8734090787
+```
 
-1. `Maximize`
-2. `Minimize`
-3. `Unmaximize`
-4. `Unminimize`
-5. `Activate`
-6. `Close`
+Example result of calling `GetFrameRect` or `GetBufferRect`:
+```
+{
+    "x": 0,
+    "y": 34,
+    "width": 1920,
+    "height": 1166
+}
+```
 
-Each takes only one parameter, winid.
+### Place Window
 
-## Using With `jq`
+Placing a window resizes and moves the provided window simultaneously.
 
-You can realize the full power of this extension when you use it with `jq` or similar tool. As gdbus call returns its own structure, which is not JSON parsable, you need to use cut or gawk in order to retrieve pure JSON output from calls.
+- `Place` takes 5 parameters: winid x y width height
 
-For example, To view all windows in json:
+Example usage:
+```sh
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.Place 8734090787 0 34 800 600
+```
+
+### Maximize, Unmaximize, Minimize, Unminimize, Close
+
+These 5 Methods provide the functionality their name implies.
+They should be invoked giving the desired window's id as a parameter. Example usages:
+
+- `Maximize`
+```sh
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.Maximize 8734090787
+```
+- `Minimize`
+```sh
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.Minimize 8734090787
+```
+
+etc...
+
+
+### Using With `jq`
+
+Because the gdbus call returns its own structure, which is not JSON parsable, you might want to use cut or gawk in order to retrieve pure JSON output from the call.
+For example, to get the window list in json you can run:
 ```sh
 gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.List | cut -c 3- | rev | cut -c4- | rev | jq .
 ```
-To get windowID of all windows in current workspace:
+
+To get the window id of all windows in current workspace:
 ```sh
 gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.List | cut -c 3- | rev | cut -c4- | rev | jq -c '.[] | select (.in_current_workspace == true) | .id'
 ```
-To get windowID and wm_class of all windows in current workspace:
-```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.List | cut -c 3- | rev | cut -c4- | rev | jq -c '[.[] | select (.in_current_workspace == true) | {id: .id,wm_class: .wm_class}]'
-```
-To get windowID and wm_class of all visible window:
-```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.List | cut -c 3- | rev | cut -c4- | rev | jq -c '[.[] | select (.frame_type == 0 and .window_type == 0) | {id: .id,wm_class: .wm_class}]'
-```
-To get windowID and wm_class of all visible window in current workspace:
-```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.List | cut -c 3- | rev | cut -c4- | rev | jq -c '[.[] | select (.in_current_workspace == true and .frame_type == 0 and .window_type == 0) | {id: .id,wm_class: .wm_class}]' | jq .
-```
-### Calls using gawk
 
-You can also use gawk to capture desired JSON values. It has to be paired with sed in order to replace escaping done by qawk on quotes. For `List` gawk should look for JSON list:
-
+To get the window id and focus of all windows in current workspace:
 ```sh
-dbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.List | gawk 'match($0, /\[.*\]/, a) {print a[0]}' | sed 's/\\"/"/g' | jq .
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.List | cut -c 3- | rev | cut -c4- | rev | jq -c '[.[] | select (.in_current_workspace == true) | {id: .id,wm_class: .focus}]'
 ```
+
+etc...
+
+
+### Using with `gawk`
+
+You can also use gawk to capture the desired JSON values. It has to be paired with sed in order to replace escaping done by qawk on quotes. For `List` gawk should look for JSON list:
+```sh
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.List | gawk 'match($0, /\[.*\]/, a) {print a[0]}' | sed 's/\\"/"/g' | jq .
+```
+
 And for `Details` you want to find just one dictionary:
-
 ```sh
 gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.Details 1610090767 | gawk 'match($0, /\{.*\}/, a) {print a[0]}' | sed 's/\\"/"/g' | jq .
 ```
+
+
+#### Credits
+
+To [ickyicky](https://github.com/ickyicky) for the original repository, which served as the foundation of this project.
+
+Credits section copied over from the original repository:
+Credit to [dceee](https://github.com/dceee) for providing example code in [this discussion](https://gist.github.com/rbreaves/257c3edfa301786e66e964d7ac036269)
+and to [blueray453](https://github.com/blueray453) for requesting additional functions and providing code example for additional properties returned by List
+method in [issue #1](https://github.com/ickyicky/window-calls/issues/1)
