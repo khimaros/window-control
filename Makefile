@@ -1,7 +1,7 @@
 NAME = window-commander
 UUID = $(NAME)@gnikolaos.gr
 
-.PHONY: build install remove clean
+.PHONY: build install uninstall clean
 
 build: clean
 	mkdir -p build/
