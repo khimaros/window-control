@@ -46,13 +46,24 @@ gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Exten
 ### Get extra information about a window
 
 - `GetDetails`, which returns detailed information about window in JSON format
-- `GetFrameRect`, which returns windows title. Title can contain special characters, which can break ceratin tools like `jq` when parsing JSON
-- `GetBufferRect`, which returns windows frame bounds in JSON dictionary. This stopped working around Gnome 43, so I moved this property to additional callable function
+- `GetFrameRect`, which returns the rectangle that bounds `window` that is what the user thinks of as the edge of the window.
+- `GetBufferRect`, which returns the rectangle that the pixmap or buffer of `window` occupies. For x11 this is the server-side geometry of the toplevel window. For wayland this is the bounding rectangle of the attached buffer.
 
 These methods should be invoked giving the desired window's id as a parameter. Example usages:
 
+`GetDetails`
 ```sh
 gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.GetDetails 8734090787
+```
+
+`GetFrameRect`
+```sh
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.GetFrameRect 8734090787
+```
+
+`GetBufferRect`
+```sh
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.GetBufferRect 8734090787
 ```
 
 Example result of calling `GetDetails`:
@@ -89,16 +100,6 @@ Example result of calling `GetDetails`:
     },
     "in_current_workspace": true
 }
-```
-
-```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.GetFrameRect 8734090787
-```
-
-or
-
-```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.GetBufferRect 8734090787
 ```
 
 Example result of calling `GetFrameRect` or `GetBufferRect`:
