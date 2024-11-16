@@ -65,9 +65,6 @@ const MR_DBUS_IFACE = `
       <method name="Unmaximize">
          <arg type="u" direction="in" name="winid" />
       </method>
-      <method name="Unminimize">
-         <arg type="u" direction="in" name="winid" />
-      </method>
       <method name="Close">
          <arg type="u" direction="in" name="winid" />
       </method>
@@ -332,15 +329,6 @@ export default class WindowCommander extends Extension {
         }
 
         win.unmaximize(3)
-    }
-
-    Unminimize(winid) {
-        const win = this._getWindowById(winid).meta_window
-        if (!win) {
-            throw new Error('Window not found')
-        }
-
-        win.unminimize()
     }
 
     Close(winid) {
