@@ -2,10 +2,12 @@
 This extension aims to provide only what is neccessary for the [ulauncher-window-manager](https://github.com/gnikolaos/ulauncher-window-manager) to work properly.
 If you don't plan to use the [ulauncher-window-manager](https://github.com/gnikolaos/ulauncher-window-manager), the extension [window-call](https://github.com/ickyicky/window-calls) by ickyicky might be a better option for you.
 
+
 ## Installation
 
 1. Install from [gnome extensions page](https://extensions.gnome.org/extension/7302/window-commander/).
 2. Or clone the repo and run ```make install```
+
 
 ## Usage
 
@@ -33,14 +35,6 @@ Example output:
         "in_current_workspace": true,
     }
 ]
-```
-
-### Move window to next or previous workspace
-
-To move the given window to the next(right or left for the previous) workspace:
-
-```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.MoveToWorkspace 8734090787 right
 ```
 
 ### Get extra information about a window
@@ -121,6 +115,22 @@ Placing a window resizes and moves the provided window simultaneously.
 Example usage:
 ```sh
 gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.Place 8734090787 0 34 800 600
+```
+
+### Move window to next or previous workspace
+
+To move the given window to the next(right or left for the previous) workspace:
+
+```sh
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.MoveToWorkspace 8734090787 right
+```
+
+### Move window to left/right/up/down monitor
+
+To move the given window to another monitor (left/right/up/down):
+
+```sh
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.MoveToMonitor 8734090787 right
 ```
 
 ### Maximize, Unmaximize, Minimize, Unminimize, Close
