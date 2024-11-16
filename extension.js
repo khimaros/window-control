@@ -44,6 +44,10 @@ const MR_DBUS_IFACE = `
          <arg type="u" direction="in" name="winid" />
          <arg type="s" direction="in" name="direction" />
       </method>
+      <method name="MoveToMonitor">
+         <arg type="u" direction="in" name="winid" />
+         <arg type="s" direction="in" name="direction" />
+      </method>
       <method name="Place">
          <arg type="u" direction="in" name="winid" />
          <arg type="i" direction="in" name="x" />
@@ -212,7 +216,7 @@ export default class WindowCommander extends Extension {
 
     MoveToWorkspace(winid, direction) {
         if (direction !== 'left' && direction !== 'right') {
-            throw new Error('Invalid action')
+            throw new Error('Invalid direction')
         }
 
         const win = this._getWindowById(winid).meta_window
@@ -229,6 +233,34 @@ export default class WindowCommander extends Extension {
 
         win.change_workspace(targetWorkspace)
         targetWorkspace.activate_with_focus(win, global.get_current_time())
+    }
+
+    MoveToMonitor(winid, direction) {
+        const validDirections = ['up', 'down', 'left', 'right']
+        if (!validDirections.includes(direction)) {
+            throw new Error(`Invalid direction: ${direction}`)
+        }
+
+        const win = this._getWindowById(winid).meta_window
+        if (!win) {
+            throw new Error('Window not found')
+        }
+
+        const directionMapping = {
+            up: 0,
+            down: 1,
+            left: 2,
+            right: 3,
+        }
+
+        const currentMonitorId = win.get_monitor()
+        const metaDisplayDirection = directionMapping[direction]
+        const targetMonitorId = global.display.get_monitor_neighbor_index(currentMonitorId, metaDisplayDirection)
+        if (targetMonitorId === -1 || targetMonitorId === null || targetMonitorId === undefined) {
+            throw new Error(`No neighbor monitor found for direction: ${direction}`)
+        }
+
+        win.move_to_monitor(targetMonitorId)
     }
 
     Place(winid, x, y, width, height) {
