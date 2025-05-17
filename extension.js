@@ -110,7 +110,7 @@ export default class WindowCommander extends Extension {
     GetDetails(winid) {
         const win = this._getWindowById(winid)
         if (!win) {
-            throw new Error('Window not found')
+            throw new Error('GetDetails: Window not found')
         }
 
         const props = {
@@ -178,7 +178,7 @@ export default class WindowCommander extends Extension {
     GetBufferRect(winid) {
         const win = this._getWindowById(winid)
         if (!win) {
-            throw new Error('Window not found')
+            throw new Error('GetBufferRect: Window not found')
         }
         const { x, y, width, height } = win.meta_window.get_buffer_rect()
         const result = {
@@ -193,7 +193,7 @@ export default class WindowCommander extends Extension {
     GetFrameRect(winid) {
         const win = this._getWindowById(winid)
         if (!win) {
-            throw new Error('Window not found')
+            throw new Error('GetFrameRect: Window not found')
         }
 
         let { x, y, width, height } = win.meta_window.get_frame_rect()
@@ -208,28 +208,28 @@ export default class WindowCommander extends Extension {
 
     GetTitle(winid) {
         let win = this._getWindowById(winid)
-        if (win) {
-            return win.meta_window.get_title()
-        } else {
-            throw new Error('Not found')
+        if (!win) {
+            throw new Error('GetTitle: Window not found')
         }
+
+        return win.meta_window.get_title()
     }
 
     MoveToWorkspace(winid, direction) {
         if (direction !== 'left' && direction !== 'right') {
-            throw new Error('Invalid direction')
+            throw new Error('MoveToWorkspace: Invalid direction')
         }
 
-        const win = this._getWindowById(winid).meta_window
+        const win = this._getWindowById(winid)?.meta_window
         if (!win) {
-            throw new Error('Window not found')
+            throw new Error('MoveToWorkspace: Window not found')
         }
 
         const metaWorkspace = win.get_workspace()
         const metaMotionDirection = direction === 'left' ? -3 : -4
         const targetWorkspace = metaWorkspace.get_neighbor(metaMotionDirection)
         if (!targetWorkspace) {
-            throw new Error('No neighbor workspace found')
+            throw new Error('MoveToWorkspace: No neighbor workspace found')
         }
 
         win.change_workspace(targetWorkspace)
@@ -239,12 +239,12 @@ export default class WindowCommander extends Extension {
     MoveToMonitor(winid, direction) {
         const validDirections = ['up', 'down', 'left', 'right']
         if (!validDirections.includes(direction)) {
-            throw new Error(`Invalid direction: ${direction}`)
+            throw new Error(`MoveToMonitor: Invalid direction: ${direction}`)
         }
 
-        const win = this._getWindowById(winid).meta_window
+        const win = this._getWindowById(winid)?.meta_window
         if (!win) {
-            throw new Error('Window not found')
+            throw new Error('MoveToMonitor: Window not found')
         }
 
         const directionMapping = {
@@ -258,7 +258,7 @@ export default class WindowCommander extends Extension {
         const metaDisplayDirection = directionMapping[direction]
         const targetMonitorId = global.display.get_monitor_neighbor_index(currentMonitorId, metaDisplayDirection)
         if (targetMonitorId === -1 || targetMonitorId === null || targetMonitorId === undefined) {
-            throw new Error(`No neighbor monitor found for direction: ${direction}`)
+            throw new Error(`MoveToMonitor: No neighbor monitor found for direction: ${direction}`)
         }
 
         win.move_to_monitor(targetMonitorId)
@@ -267,12 +267,12 @@ export default class WindowCommander extends Extension {
     Place(winid, x, y, width, height) {
         const win = this._getWindowById(winid)
         if (!win) {
-            throw new Error('Window not found')
+            throw new Error('Place: Window not found')
         }
 
         const monitorWorkArea = this._getMonitorWorkAreaByWindow(win)
         if (!monitorWorkArea) {
-            throw new Error("Failed to get monitor's work area")
+            throw new Error("Place: Failed to get monitor's work area")
         }
 
         if (height >= monitorWorkArea.height && width >= monitorWorkArea.width) {
@@ -280,7 +280,7 @@ export default class WindowCommander extends Extension {
                 win.meta_window.maximize(3)
                 return
             }
-            throw new Error('Provided height/width are out of bounds')
+            throw new Error('Place: Provided height/width are out of bounds')
         }
 
         if (
@@ -292,7 +292,7 @@ export default class WindowCommander extends Extension {
             win.meta_window.unmaximize(3)
             if (!win.meta_window.allows_move() || !win.meta_window.allows_resize()) {
                 win.meta_window.maximize(3)
-                throw new Error('Window is not moveable or resizeable')
+                throw new Error('Place: Window is not moveable or resizeable')
             }
         }
 
@@ -327,38 +327,38 @@ export default class WindowCommander extends Extension {
 
     Move(winid, x, y) {
         let win = this._getWindowById(winid)
-        if (win) {
-            if (win.meta_window.maximized_horizontally || win.meta_window.maximized_vertically) {
-                win.meta_window.unmaximize(3)
-            }
-            win.meta_window.move_frame(1, x, y)
-        } else {
-            throw new Error('Not found')
+        if (!win) {
+            throw new Error('Move: Window not found')
         }
+
+        if (win.meta_window.maximized_horizontally || win.meta_window.maximized_vertically) {
+            win.meta_window.unmaximize(3)
+        }
+        win.meta_window.move_frame(1, x, y)
     }
 
     Maximize(winid) {
-        const win = this._getWindowById(winid).meta_window
+        const win = this._getWindowById(winid)?.meta_window
         if (!win) {
-            throw new Error('Window not found')
+            throw new Error('Maximize: Window not found')
         }
 
         win.maximize(3)
     }
 
     Minimize(winid) {
-        const win = this._getWindowById(winid).meta_window
+        const win = this._getWindowById(winid)?.meta_window
         if (!win) {
-            throw new Error('Window not found')
+            throw new Error('Minimize: Window not found')
         }
 
         win.minimize()
     }
 
     Unmaximize(winid) {
-        const win = this._getWindowById(winid).meta_window
+        const win = this._getWindowById(winid)?.meta_window
         if (!win) {
-            throw new Error('Window not found')
+            throw new Error('Unmaximize: Window not found')
         }
 
         win.unmaximize(3)
@@ -367,7 +367,7 @@ export default class WindowCommander extends Extension {
     Close(winid, isForced) {
         const win = this._getWindowById(winid)?.meta_window
         if (!win) {
-            throw new Error('Window not found')
+            throw new Error('Close: Window not found')
         }
 
         if (isForced) {
