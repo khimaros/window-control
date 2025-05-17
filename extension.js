@@ -71,6 +71,7 @@ const MR_DBUS_IFACE = `
       </method>
       <method name="Close">
          <arg type="u" direction="in" name="winid" />
+         <arg type="b" direction="in" name="isForced" />
       </method>
       <method name="GetFocusedMonitorDetails">
          <arg type="s" direction="out" name="focusedMonitorDetails" />
@@ -363,12 +364,17 @@ export default class WindowCommander extends Extension {
         win.unmaximize(3)
     }
 
-    Close(winid) {
-        const win = this._getWindowById(winid).meta_window
+    Close(winid, isForced) {
+        const win = this._getWindowById(winid)?.meta_window
         if (!win) {
             throw new Error('Window not found')
         }
 
-        win.kill()
+        if (isForced) {
+            win.kill()
+            return
+        }
+
+        win.delete(global.get_current_time())
     }
 }

@@ -1,4 +1,4 @@
-# Window Commander
+
 This extension aims to provide only what is neccessary for the [ulauncher-window-manager](https://github.com/gnikolaos/ulauncher-window-manager) to work properly.
 If you don't plan to use the [ulauncher-window-manager](https://github.com/gnikolaos/ulauncher-window-manager), the extension [window-call](https://github.com/ickyicky/window-calls) by ickyicky might be a better option for you.
 
@@ -145,6 +145,10 @@ gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Exten
 - `Minimize`
 ```sh
 gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.Minimize 8734090787
+```
+- `Close` - Pass true or false at the end of the command to force close or not.
+```sh
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.Close 8734090787 false
 ```
 
 etc...
