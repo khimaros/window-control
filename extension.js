@@ -73,6 +73,9 @@ const MR_DBUS_IFACE = `
          <arg type="u" direction="in" name="winid" />
          <arg type="b" direction="in" name="isForced" />
       </method>
+      <method name="Fullscreen">
+         <arg type="u" direction="in" name="winid" />
+      </method>
       <method name="GetFocusedMonitorDetails">
          <arg type="s" direction="out" name="focusedMonitorDetails" />
       </method>
@@ -376,5 +379,16 @@ export default class WindowCommander extends Extension {
         }
 
         win.delete(global.get_current_time())
+    }
+
+    Fullscreen(winid) {
+        const win = this._getWindowById(winid)?.meta_window
+        if (!win) {
+            throw new Error('Fullscreen: Window not found')
+        }
+
+        if (!win.is_fullscreen()) {
+            win.make_fullscreen()
+        }
     }
 }
