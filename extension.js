@@ -76,6 +76,9 @@ const MR_DBUS_IFACE = `
       <method name="Fullscreen">
          <arg type="u" direction="in" name="winid" />
       </method>
+      <method name="ExitFullscreen">
+         <arg type="u" direction="in" name="winid" />
+      </method>
       <method name="GetFocusedMonitorDetails">
          <arg type="s" direction="out" name="focusedMonitorDetails" />
       </method>
@@ -389,6 +392,16 @@ export default class WindowCommander extends Extension {
 
         if (!win.is_fullscreen()) {
             win.make_fullscreen()
+        }
+    }
+
+    ExitFullscreen(winid) {
+        const win = this._getWindowById(winid)?.meta_window
+        if (!win) {
+            throw new Error('ExitFullscreen: Window not found')
+        }
+        if (win.is_fullscreen()) {
+            win.unmake_fullscreen()
         }
     }
 }
