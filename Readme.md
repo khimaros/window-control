@@ -133,9 +133,9 @@ To move the given window to another monitor (left/right/up/down):
 gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowCommander --method org.gnome.Shell.Extensions.WindowCommander.MoveToMonitor 8734090787 right
 ```
 
-### Maximize, Unmaximize, Minimize, Unminimize, Close, Fullscreen, ExitFullscreen
+### Maximize, Unmaximize, Minimize, Unminimize, Close, ToggleFullscreen
 
-These 7 Methods provide the functionality their name implies.
+These 6 Methods provide the functionality their name implies.
 They should be invoked giving the desired window's id as a parameter. Example usages:
 
 - `Maximize`
