@@ -118,7 +118,7 @@ gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Exten
 To move the given window to the next(right or left for the previous) workspace:
 
 ```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowControl --method org.gnome.Shell.Extensions.WindowControl.MoveToWorkspace 8734090787 right
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowControl --method org.gnome.Shell.Extensions.WindowControl.MoveToWorkspace 8734090787 0
 ```
 
 ### Move window to left/right/up/down monitor
@@ -126,7 +126,7 @@ gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Exten
 To move the given window to another monitor (left/right/up/down):
 
 ```sh
-gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowControl --method org.gnome.Shell.Extensions.WindowControl.MoveToMonitor 8734090787 right
+gdbus call --session --dest org.gnome.Shell --object-path /org/gnome/Shell/Extensions/WindowControl --method org.gnome.Shell.Extensions.WindowControl.MoveToMonitor 8734090787 0
 ```
 
 ### Maximize, Unmaximize, Minimize, Unminimize, Close, ToggleFullscreen
