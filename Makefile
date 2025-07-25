@@ -1,5 +1,5 @@
-NAME = window-commander
-UUID = $(NAME)@gnikolaos.gr
+NAME = window-control
+UUID = $(NAME)@khimaros.com
 
 .PHONY: build install uninstall clean
 

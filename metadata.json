@@ -1,8 +1,8 @@
 {
-    "name": "Window Commander",
+    "name": "Window Control",
     "description": "Provides a D-Bus interface for managing and controlling windows, including listing, resizing, moving, and workspace management",
-    "uuid": "window-commander@gnikolaos.gr",
+    "uuid": "window-control@khimaros.com",
     "shell-version": ["45", "46", "47", "48"],
-    "version": 6,
-    "url": "https://github.com/gnikolaos/window-commander"
+    "version": 1,
+    "url": "https://github.com/khimaros/window-control"
 }

@@ -24,7 +24,7 @@ import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js'
 
 const MR_DBUS_IFACE = `
 <node>
-   <interface name="org.gnome.Shell.Extensions.WindowCommander">
+   <interface name="org.gnome.Shell.Extensions.WindowControl">
       <method name="List">
          <arg type="s" direction="out" name="windowList" />
       </method>
@@ -39,6 +39,10 @@ const MR_DBUS_IFACE = `
       <method name="GetBufferRect">
          <arg type="u" direction="in" name="winid" />
          <arg type="s" direction="out" name="bufferRect" />
+      </method>
+      <method name="GetTitle">
+         <arg type="u" direction="in" name="winid" />
+         <arg type="s" direction="out" name="title" />
       </method>
       <method name="MoveToWorkspace">
          <arg type="u" direction="in" name="winid" />
@@ -82,10 +86,10 @@ const MR_DBUS_IFACE = `
    </interface>
 </node>`
 
-export default class WindowCommander extends Extension {
+export default class WindowControl extends Extension {
     enable() {
         this._dbus = Gio.DBusExportedObject.wrapJSObject(MR_DBUS_IFACE, this)
-        this._dbus.export(Gio.DBus.session, '/org/gnome/Shell/Extensions/WindowCommander')
+        this._dbus.export(Gio.DBus.session, '/org/gnome/Shell/Extensions/WindowControl')
     }
 
     disable() {
